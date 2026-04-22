@@ -7,7 +7,7 @@ export function getUserIdFromToken(): number | null {
     const base64 = token.split(".")[1];
     const payload = JSON.parse(atob(base64));
 
-    console.log("PAYLOAD JWT:", payload); // 🔥 DEBUG
+    console.log("PAYLOAD JWT:", payload); // DEBUG
 
     const id = payload.nameid;
 

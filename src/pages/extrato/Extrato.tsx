@@ -60,7 +60,7 @@ function Extrato() {
     }
 
     carregarExtrato();
-  }, []); // 🔥 IMPORTANTE: array vazio
+  }, []); // IMPORTANTE: array vazio
 
   function getTipoLabel(tipo: number) {
     switch (tipo) {
