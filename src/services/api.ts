@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "https://sprint-api-bancaria-fordenter-csharp.onrender.com/",
+  baseURL: "https://sprint-api-bancaria-fordenter-csharp.onrender.com/api/",
 });
 
 api.interceptors.request.use((config) => {
