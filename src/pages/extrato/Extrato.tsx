@@ -10,10 +10,12 @@ interface Transacao {
   valor: number;
   data: string;
   contaId: number;
+  contaDestinoId?: number;
 }
 
 function Extrato() {
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
+  const [minhaContaId, setMinhaContaId] = useState<number | null>(null); // Para identificar
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -26,12 +28,13 @@ function Extrato() {
         const contaRes = await api.get(`/Contas/cliente/${clienteId}`);
         const conta = Array.isArray(contaRes.data) ? contaRes.data[0] : contaRes.data;
 
-        if (!conta) return;
-
-        const response = await api.get(`/Transacoes/conta/${conta.id}`);
-        setTransacoes(response.data);
+        if (conta) {
+          setMinhaContaId(conta.id);
+          const response = await api.get(`/Transacoes/conta/${conta.id}`);
+          setTransacoes(response.data);
+        }
       } catch (error) {
-        console.error("Erro ao carregar extrato", error);
+        console.error("Erro ao carregar extrato:", error);
       } finally {
         setLoading(false);
       }
@@ -39,15 +42,19 @@ function Extrato() {
     carregarExtrato();
   }, []);
 
-  // Ajustado para bater com o Enum do Backend (1, 2, 3)
-  function getTipoInfo(tipo: number) {
-    switch (tipo) {
+  function getTransacaoStyle(t: Transacao) {
+    switch (t.tipo) {
       case 1: // Depósito
-        return { label: "Depósito Recebido", color: "text-blue-600", sign: "+" };
+        return { label: "Depósito Recebido", color: "text-green-600", sign: "+" };
       case 2: // Saque
         return { label: "Saque Realizado", color: "text-red-600", sign: "-" };
       case 3: // Transferência
-        return { label: "Transferência", color: "text-red-600", sign: "-" };
+        const euRecebi = t.contaDestinoId === minhaContaId;
+        return {
+          label: euRecebi ? "Transferência Recebida" : "Transferência Enviada",
+          color: euRecebi ? "text-green-600" : "text-red-600",
+          sign: euRecebi ? "+" : "-",
+        };
       default:
         return { label: "Transação", color: "text-gray-600", sign: "" };
     }
@@ -56,7 +63,6 @@ function Extrato() {
   return (
     <MainLayout>
       <div className="max-w-2xl mx-auto mt-6">
-        {/* BOTÃO VOLTAR ESTILIZADO */}
         <button
           onClick={() => navigate("/dashboard")}
           className="flex items-center gap-2 mb-6 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all cursor-pointer font-medium border border-gray-300 shadow-sm"
@@ -70,24 +76,25 @@ function Extrato() {
           </h2>
 
           {loading ? (
-            <p className="text-center py-10 text-gray-500 animate-pulse">Carregando transações...</p>
+            <p className="text-center py-10 text-gray-500 animate-pulse">Buscando movimentações...</p>
           ) : transacoes.length === 0 ? (
-            <p className="text-center py-10 text-gray-500">Nenhuma movimentação encontrada.</p>
+            <p className="text-center py-10 text-gray-500">Nenhuma transação encontrada.</p>
           ) : (
             <div className="flex flex-col gap-4">
-              {transacoes.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()).map((t) => {
-                const info = getTipoInfo(t.tipo);
+              {/* Ordenação garantida pela data mais recente */}
+              {[...transacoes].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()).map((t) => {
+                const style = getTransacaoStyle(t);
                 return (
                   <div key={t.id} className="flex justify-between items-center border-b border-gray-50 pb-3 last:border-0">
                     <div>
-                      <p className="font-semibold text-gray-700">{info.label}</p>
+                      <p className="font-semibold text-gray-700">{style.label}</p>
                       <p className="text-xs text-gray-400">
                         {new Date(t.data).toLocaleString("pt-BR")}
                       </p>
                     </div>
 
-                    <p className={`font-bold text-lg ${info.color}`}>
-                      {info.sign} {t.valor.toLocaleString("pt-BR", {
+                    <p className={`font-bold text-lg ${style.color}`}>
+                      {style.sign} {t.valor.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
                       })}
