@@ -13,7 +13,7 @@ function Dashboard() {
 
   const navigate = useNavigate();
 
-  // 1. Isolamos a lógica de carregar dados para poder chamá-la em vários lugares
+  // Isolada a lógica de carregar dados para poder chamá-la em vários lugares
   const carregarDados = useCallback(async () => {
     try {
       const clienteId = getUserIdFromToken();
@@ -64,7 +64,6 @@ function Dashboard() {
 
       alert("Conta criada com sucesso!");
 
-      // ✅ A MÁGICA: Em vez de reload, apenas chamamos a função novamente
       // Isso atualiza o saldo e o estado 'temConta' sem recarregar a página
       await carregarDados(); 
       
@@ -104,7 +103,6 @@ function Dashboard() {
         </div>
       ) : (
         <div className="mt-6">
-            {/* O restante do seu código de Saldo e Botões (Saque, Deposito, etc) permanece igual */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <p className="text-sm text-gray-500 font-semibold uppercase">Saldo em Conta</p>
                 <p className="text-3xl font-bold text-gray-800">R$ {saldo?.toFixed(2)}</p>
