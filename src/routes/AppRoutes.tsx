@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom"; // ✅ Importe o Navigate
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import Dashboard from "../pages/dashboard/Dashboard";
@@ -11,12 +11,14 @@ import Extrato from "../pages/extrato/Extrato";
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/index.html" element={<Navigate to="/" replace />} />
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/deposito" element={<Deposito />} />
       <Route path="/transferencia" element={<Transferencia />} />
       <Route path="/saque" element={<Saque />} />
       <Route path="/extrato" element={<Extrato />} />
+      
       <Route
         path="/dashboard"
         element={
@@ -25,8 +27,10 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
+
+      {/* Caso o usuário digite qualquer outra coisa que não existe, volta para o login */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-    
   );
 }
 
