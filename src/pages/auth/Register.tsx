@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { api } from "../../services/api"; 
 
 export default function Register() {
   const navigate = useNavigate();
@@ -13,22 +13,20 @@ export default function Register() {
     e.preventDefault();
 
     try {
-      await axios.post("http://localhost:5104/api/Clientes", {
+      await api.post("/Clientes", {
         nome,
         cpf,
         senha,
       });
 
       alert("Cadastro realizado com sucesso!");
-
-      navigate("/"); // volta pro login
+      navigate("/"); 
     } catch (error: any) {
       console.error(error);
-
       if (error.response?.data) {
-        alert(error.response.data);
+        alert(JSON.stringify(error.response.data));
       } else {
-        alert("Erro ao cadastrar.");
+        alert("Erro ao cadastrar ou conectar ao servidor.");
       }
     }
   }
@@ -40,7 +38,6 @@ export default function Register() {
         className="bg-white p-6 rounded-xl shadow-md w-80 flex flex-col gap-3"
       >
         <h1 className="text-xl font-bold text-center">Cadastro</h1>
-
         <input
           type="text"
           placeholder="Nome"
@@ -48,7 +45,6 @@ export default function Register() {
           onChange={(e) => setNome(e.target.value)}
           className="border p-2 rounded"
         />
-
         <input
           type="text"
           placeholder="CPF"
@@ -56,7 +52,6 @@ export default function Register() {
           onChange={(e) => setCpf(e.target.value)}
           className="border p-2 rounded"
         />
-
         <input
           type="password"
           placeholder="Senha"
@@ -64,14 +59,12 @@ export default function Register() {
           onChange={(e) => setSenha(e.target.value)}
           className="border p-2 rounded"
         />
-
         <button
           type="submit"
           className="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
         >
           Cadastrar
         </button>
-
         <p className="text-sm text-center">
           Já tem conta?{" "}
           <span

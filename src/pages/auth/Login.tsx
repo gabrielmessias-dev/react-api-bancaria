@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { api } from "../../services/api"; 
 
 export default function Login() {
   const { login } = useAuth();
@@ -14,20 +14,17 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        "http://localhost:5104/api/Auth/login",
-        {
-          cpf,
-          senha,
-        }
-      );
+      // A instância que já tem a baseURL do Render
+      const response = await api.post("/Auth/login", {
+        cpf,
+        senha,
+      });
 
       const token = response.data.token;
-
       login(token);
-
       navigate("/dashboard");
     } catch (error) {
+      console.error(error);
       alert("CPF ou senha inválidos");
     }
   }
@@ -39,7 +36,6 @@ export default function Login() {
         className="bg-white p-6 rounded-xl shadow-md w-80 flex flex-col gap-3"
       >
         <h1 className="text-xl font-bold text-center">Entrar</h1>
-
         <input
           type="text"
           placeholder="CPF"
@@ -47,7 +43,6 @@ export default function Login() {
           onChange={(e) => setCpf(e.target.value)}
           className="border p-2 rounded"
         />
-
         <input
           type="password"
           placeholder="Senha"
@@ -55,14 +50,12 @@ export default function Login() {
           onChange={(e) => setSenha(e.target.value)}
           className="border p-2 rounded"
         />
-
         <button
           type="submit"
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded cursor-pointer transition w-full"
         >
           Entrar
         </button>
-
         <p className="text-sm text-center">
           Não tem conta?{" "}
           <span
