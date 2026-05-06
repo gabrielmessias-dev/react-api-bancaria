@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import MainLayout from "../../components/layout/MainLayout";
 import { api } from "../../services/api";
 import { getUserIdFromToken } from "../../utils/decodeToken";
@@ -9,64 +9,77 @@ function Dashboard() {
   const [saldo, setSaldo] = useState<number | null>(null);
   const [temConta, setTemConta] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [btnLoading, setBtnLoading] = useState(false); // Feedback para o botão
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    async function carregarDados() {
-      try {
-        const clienteId = getUserIdFromToken();
-        if (!clienteId) return;
-
-        const clienteRes = await api.get(`/api/Clientes/${clienteId}`);
-        setNome(clienteRes.data.nome);
-
-        try {
-          const contaRes = await api.get(
-            `/api/Contas/cliente/${clienteId}`
-          );
-
-          const conta = Array.isArray(contaRes.data)
-            ? contaRes.data[0]
-            : contaRes.data;
-
-          if (conta) {
-            setSaldo(conta.saldo);
-            setTemConta(true);
-          }
-        } catch {
-          setTemConta(false);
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    carregarDados();
-  }, []);
-
-  async function criarConta() {
+  // 1. Isolamos a lógica de carregar dados para poder chamá-la em vários lugares
+  const carregarDados = useCallback(async () => {
     try {
       const clienteId = getUserIdFromToken();
+      if (!clienteId) {
+        navigate("/"); // Só redireciona se realmente não houver token
+        return;
+      }
 
-      await api.post("/api/Contas", {
-        clienteId,
+      // Busca dados do Cliente
+      const clienteRes = await api.get(`/Clientes/${clienteId}`);
+      setNome(clienteRes.data.nome);
+
+      // Busca dados da Conta
+      try {
+        const contaRes = await api.get(`/Contas/cliente/${clienteId}`);
+        const conta = Array.isArray(contaRes.data) ? contaRes.data[0] : contaRes.data;
+
+        if (conta) {
+          setSaldo(conta.saldo);
+          setTemConta(true);
+        } else {
+          setTemConta(false);
+        }
+      } catch (err) {
+        setTemConta(false); // Caso o 404 da conta seja tratado como erro
+      }
+    } catch (error) {
+      console.error("Erro ao carregar Dashboard:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    carregarDados();
+  }, [carregarDados]);
+
+  // 2. Função de criar conta atualizada
+  async function criarConta() {
+    try {
+      setBtnLoading(true);
+      const clienteId = getUserIdFromToken();
+      if (!clienteId) return;
+
+      await api.post("/Contas", {
+        clienteId: Number(clienteId),
       });
 
       alert("Conta criada com sucesso!");
-      window.location.reload();
+
+      // ✅ A MÁGICA: Em vez de reload, apenas chamamos a função novamente
+      // Isso atualiza o saldo e o estado 'temConta' sem recarregar a página
+      await carregarDados(); 
+      
     } catch (error) {
       console.error(error);
       alert("Erro ao criar conta");
+    } finally {
+      setBtnLoading(false);
     }
   }
 
   if (loading) {
     return (
       <MainLayout>
-        <p>Carregando...</p>
+        <p className="p-10 text-center animate-pulse">Sincronizando com o banco...</p>
       </MainLayout>
     );
   }
@@ -74,59 +87,36 @@ function Dashboard() {
   return (
     <MainLayout>
       <h1 className="text-2xl font-bold">Dashboard</h1>
-
-      <p className="mt-4 text-lg">Olá, {nome} 👋</p>
+      <p className="mt-4 text-lg">Olá, <span className="font-semibold text-blue-600">{nome}</span> 👋</p>
 
       {!temConta ? (
-        <div className="mt-6">
-          <p>Você ainda não possui conta.</p>
-
+        <div className="mt-6 p-8 bg-blue-50 border-2 border-dashed border-blue-200 rounded-2xl text-center">
+          <p className="text-blue-800 font-medium">Você está quase lá! Abra sua conta para começar.</p>
           <button
             onClick={criarConta}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer transition"
+            disabled={btnLoading}
+            className={`mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg transition shadow-lg ${
+              btnLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700 cursor-pointer"
+            }`}
           >
-            Criar Conta
+            {btnLoading ? "Processando..." : "Abrir Minha Conta"}
           </button>
         </div>
       ) : (
         <div className="mt-6">
-          <p className="text-xl">
-            Saldo:
-            <span className="font-bold text-green-600 ml-2">
-              R$ {saldo}
-            </span>
-          </p>
-
-          {/* BOTÕES DE AÇÃO */}
-          <div className="mt-6 flex gap-4">
-            <button
-              onClick={() => navigate("/deposito")}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer transition"
-            >
-              Depósito
-            </button>
-
-            <button
-              onClick={() => navigate("/transferencia")}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer transition"
-            >
-              Transferência
-            </button>
-
-            <button
-              onClick={() => navigate("/saque")}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded cursor-pointer transition"
-            >
-              Saque
-            </button>
-
-            <button
-              onClick={() => navigate("/extrato")}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 cursor-pointer"
-            >
-              Ver Extrato
-            </button>
-          </div>
+            {/* O restante do seu código de Saldo e Botões (Saque, Deposito, etc) permanece igual */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p className="text-sm text-gray-500 font-semibold uppercase">Saldo em Conta</p>
+                <p className="text-3xl font-bold text-gray-800">R$ {saldo?.toFixed(2)}</p>
+            </div>
+            
+            {/* botões de navegação ... */}
+            <div className="mt-6 flex flex-wrap gap-4">
+                 <button onClick={() => navigate("/deposito")} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Depósito</button>
+                 <button onClick={() => navigate("/transferencia")} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Transferência</button>
+                 <button onClick={() => navigate("/saque")} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">Saque</button>
+                 <button onClick={() => navigate("/extrato")} className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">Extrato</button>
+            </div>
         </div>
       )}
     </MainLayout>
