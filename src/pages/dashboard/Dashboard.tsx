@@ -7,10 +7,11 @@ import { useNavigate } from "react-router-dom";
 function Dashboard() {
   const [nome, setNome] = useState("");
   const [saldo, setSaldo] = useState<number | null>(null);
-  const [contaId, setContaId] = useState<number | null>(null); // Armazena o ID da conta
+  const [contaId, setContaId] = useState<number | null>(null);
   const [temConta, setTemConta] = useState(false);
   const [loading, setLoading] = useState(true);
   const [btnLoading, setBtnLoading] = useState(false);
+  const [verSaldo, setVerSaldo] = useState(true); // Estética NuBank
 
   const navigate = useNavigate();
 
@@ -21,17 +22,15 @@ function Dashboard() {
         navigate("/");
         return;
       }
-
       const clienteRes = await api.get(`/Clientes/${clienteId}`);
       setNome(clienteRes.data.nome);
 
       try {
         const contaRes = await api.get(`/Contas/cliente/${clienteId}`);
         const conta = Array.isArray(contaRes.data) ? contaRes.data[0] : contaRes.data;
-
         if (conta) {
           setSaldo(conta.saldo);
-          setContaId(conta.id); // Guarda o ID da conta
+          setContaId(conta.id);
           setTemConta(true);
         } else {
           setTemConta(false);
@@ -55,15 +54,10 @@ function Dashboard() {
       setBtnLoading(true);
       const clienteId = getUserIdFromToken();
       if (!clienteId) return;
-
-      await api.post("/Contas", {
-        clienteId: Number(clienteId),
-      });
-
+      await api.post("/Contas", { clienteId: Number(clienteId) });
       alert("Conta criada com sucesso!");
       await carregarDados(); 
     } catch (error) {
-      console.error(error);
       alert("Erro ao criar conta");
     } finally {
       setBtnLoading(false);
@@ -72,51 +66,80 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <MainLayout>
-        <p className="p-10 text-center animate-pulse text-gray-500">Sincronizando com o banco...</p>
-      </MainLayout>
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-100 border-t-[#003399] rounded-full animate-spin"></div>
+          <p className="text-slate-400 font-medium animate-pulse">Ford Enter está carregando...</p>
+        </div>
+      </div>
     );
   }
 
   return (
     <MainLayout>
-      <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-      <p className="mt-2 text-lg">Olá, <span className="font-semibold text-blue-600">{nome}</span> 👋</p>
+      <header className="mb-8">
+        <p className="text-slate-500 font-medium">Olá,</p>
+        <h2 className="text-3xl font-bold text-slate-800">{nome} 👋</h2>
+      </header>
 
       {!temConta ? (
-        <div className="mt-6 p-8 bg-blue-50 border-2 border-dashed border-blue-200 rounded-2xl text-center">
-          <p className="text-blue-800 font-medium">Sua jornada financeira começa aqui. Abra sua conta agora!</p>
+        <div className="bg-white p-10 rounded-[2rem] shadow-xl shadow-blue-100/50 border border-blue-50 text-center">
+          <div className="w-20 h-20 bg-blue-50 text-[#003399] rounded-full flex items-center justify-center mx-auto mb-6">
+             <span className="text-3xl">🚀</span>
+          </div>
+          <h3 className="text-xl font-bold text-slate-800 mb-2">Pronto para começar?</h3>
+          <p className="text-slate-500 mb-8 max-w-xs mx-auto">Sua conta digital Ford Enter é gratuita e fica pronta em segundos.</p>
           <button
             onClick={criarConta}
             disabled={btnLoading}
-            className={`mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg transition shadow-lg ${
-              btnLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700 cursor-pointer"
-            }`}
+            className="w-full bg-[#003399] text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-200 hover:scale-[1.02] transition-transform disabled:opacity-50"
           >
-            {btnLoading ? "Processando..." : "Abrir Minha Conta"}
+            {btnLoading ? "Criando..." : "Quero minha conta agora"}
           </button>
         </div>
       ) : (
-        <div className="mt-6 space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-            <div>
-              <p className="text-sm text-gray-400 font-semibold uppercase tracking-wider">Saldo em Conta</p>
-              <p className="text-3xl font-bold text-gray-800">
-                R$ {saldo?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
+        <div className="space-y-8">
+          {/* CARD DE SALDO */}
+          <div className="bg-[#003399] p-8 rounded-[2.5rem] shadow-2xl shadow-blue-200 text-white relative overflow-hidden">
+            <div className="relative z-10">
+              <div className="flex justify-between items-center mb-4">
+                <p className="text-blue-100/80 font-medium uppercase tracking-widest text-xs">Saldo disponível</p>
+                <button onClick={() => setVerSaldo(!verSaldo)} className="p-2 hover:bg-white/10 rounded-full transition">
+                   {verSaldo ? "👁️" : "🙈"}
+                </button>
+              </div>
+              
+              <h3 className="text-4xl font-black mb-6">
+                {verSaldo ? `R$ ${saldo?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "••••"}
+              </h3>
+
+              <div className="flex items-center gap-2 bg-white/10 w-fit px-4 py-2 rounded-full border border-white/10">
+                <span className="text-xs font-bold uppercase text-blue-100">Conta Nº #{contaId}</span>
+              </div>
             </div>
-            {/* Badge do número da conta */}
-            <div className="text-right">
-              <p className="text-xs text-gray-400 font-bold uppercase">Nº da Conta</p>
-              <p className="text-lg font-mono font-bold text-blue-700">#{contaId}</p>
-            </div>
+            {/* Detalhe no fundo do card */}
+            <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
           </div>
             
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button onClick={() => navigate("/deposito")} className="bg-green-600 text-white px-4 py-3 rounded-xl hover:bg-green-700 transition font-bold shadow-md cursor-pointer">Depósito</button>
-            <button onClick={() => navigate("/transferencia")} className="bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 transition font-bold shadow-md cursor-pointer">Transferência</button>
-            <button onClick={() => navigate("/saque")} className="bg-red-600 text-white px-4 py-3 rounded-xl hover:bg-red-700 transition font-bold shadow-md cursor-pointer">Saque</button>
-            <button onClick={() => navigate("/extrato")} className="bg-purple-600 text-white px-4 py-3 rounded-xl hover:bg-purple-700 transition font-bold shadow-md cursor-pointer">Extrato</button>
+          {/* MENU DE AÇÕES RÁPIDAS */}
+          <div className="grid grid-cols-4 gap-4">
+            {[
+              { label: "Depositar", icon: "➕", path: "/deposito", color: "bg-emerald-50 text-emerald-600" },
+              { label: "Transferir", icon: "💸", path: "/transferencia", color: "bg-blue-50 text-blue-600" },
+              { label: "Sacar", icon: "💵", path: "/saque", color: "bg-rose-50 text-rose-600" },
+              { label: "Extrato", icon: "📄", path: "/extrato", color: "bg-slate-100 text-slate-600" },
+            ].map((item) => (
+              <button
+                key={item.label}
+                onClick={() => navigate(item.path)}
+                className="flex flex-col items-center gap-2 group cursor-pointer"
+              >
+                <div className={`w-14 h-14 ${item.color} rounded-2xl flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform`}>
+                  {item.icon}
+                </div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-tighter">{item.label}</span>
+              </button>
+            ))}
           </div>
         </div>
       )}

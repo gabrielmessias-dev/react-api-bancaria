@@ -16,12 +16,8 @@ export default function Saque() {
     setLoading(true);
     try {
       const clienteId = getUserIdFromToken();
-
       const contaRes = await api.get(`/Contas/cliente/${clienteId}`);
-
-      const conta = Array.isArray(contaRes.data)
-        ? contaRes.data[0]
-        : contaRes.data;
+      const conta = Array.isArray(contaRes.data) ? contaRes.data[0] : contaRes.data;
 
       await api.post("/Transacoes/saque", {
         valor: Number(valor),
@@ -31,7 +27,6 @@ export default function Saque() {
       alert("Saque realizado com sucesso!");
       navigate("/dashboard");
     } catch (error: any) {
-      console.error(error);
       const msg = error.response?.data?.mensagem || "Erro ao realizar saque";
       alert(msg);
     } finally {
@@ -41,39 +36,48 @@ export default function Saque() {
 
   return (
     <MainLayout>
-      {/* Botão de voltar estilizado */}
-      <button
-        onClick={() => navigate("/dashboard")}
-        className="flex items-center gap-2 mb-6 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all cursor-pointer font-medium border border-gray-300"
-      >
-        <span>←</span> Voltar ao Menu
-      </button>
-
-      <h1 className="text-2xl font-bold text-gray-800">Saque</h1>
-      <p className="text-gray-500 mb-6">Retire valores da sua conta instantaneamente.</p>
-
-      <form onSubmit={handleSaque} className="flex flex-col gap-4 max-w-md bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <label className="text-sm font-semibold text-gray-600">Quanto deseja sacar?</label>
-        <div className="relative">
-          <span className="absolute left-3 top-2 text-gray-400">R$</span>
-          <input
-            type="number"
-            placeholder="0,00"
-            value={valor}
-            onChange={(e) => setValor(e.target.value)}
-            className="border border-gray-300 p-2 pl-10 rounded-lg w-full focus:ring-2 focus:ring-red-500 outline-none transition"
-          />
-        </div>
-
-        <button 
-          disabled={loading}
-          className={`py-3 rounded-lg font-bold text-white transition shadow-md ${
-            loading ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 cursor-pointer"
-          }`}
+      <div className="max-w-md mx-auto">
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="group flex items-center gap-2 mb-8 text-slate-400 hover:text-[#003399] transition-colors font-semibold text-sm cursor-pointer"
         >
-          {loading ? "Processando..." : "Confirmar Saque"}
+          <span className="text-lg group-hover:-translate-x-1 transition-transform">←</span> 
+          Voltar ao início
         </button>
-      </form>
+
+        <header className="mb-8">
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Saque</h1>
+          <p className="text-slate-500 font-medium">Retire seu dinheiro com segurança.</p>
+        </header>
+
+        <form 
+          onSubmit={handleSaque} 
+          className="bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/60 border border-slate-50 flex flex-col gap-6"
+        >
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-400 uppercase ml-1">Valor do saque</label>
+            <div className="relative">
+              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-300">R$</span>
+              <input
+                type="number"
+                placeholder="0,00"
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-slate-50 p-5 pl-14 rounded-2xl text-2xl font-bold text-slate-700 focus:border-rose-500 focus:bg-white outline-none transition-all placeholder:text-slate-200"
+              />
+            </div>
+          </div>
+
+          <button 
+            disabled={loading}
+            className={`w-full py-5 rounded-2xl font-black text-white text-lg transition-all shadow-lg active:scale-[0.98] ${
+              loading ? "bg-slate-300 cursor-not-allowed" : "bg-rose-500 hover:bg-rose-600 shadow-rose-200 cursor-pointer"
+            }`}
+          >
+            {loading ? "Processando..." : "Confirmar Saque"}
+          </button>
+        </form>
+      </div>
     </MainLayout>
   );
 }

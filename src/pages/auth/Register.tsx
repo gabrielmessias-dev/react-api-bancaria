@@ -8,9 +8,11 @@ export default function Register() {
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [senha, setSenha] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    setLoading(true);
 
     try {
       await api.post("/Clientes", {
@@ -23,55 +25,86 @@ export default function Register() {
       navigate("/"); 
     } catch (error: any) {
       console.error(error);
-      if (error.response?.data) {
-        alert(JSON.stringify(error.response.data));
-      } else {
-        alert("Erro ao cadastrar ou conectar ao servidor.");
-      }
+      alert(error.response?.data || "Erro ao cadastrar.");
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-100 px-6">
+      {/* LOGO AREA */}
+      <div className="flex flex-col items-center gap-2 mb-8">
+        <div className="w-16 h-16 bg-[#003399] rounded-[1.5rem] flex items-center justify-center shadow-xl shadow-blue-200">
+          <span className="text-white font-black text-xl">FE</span>
+        </div>
+        <h1 className="text-2xl font-black text-[#003399] tracking-tighter">
+          FORD<span className="font-light text-slate-400">ENTER</span>
+        </h1>
+      </div>
+
       <form
         onSubmit={handleRegister}
-        className="bg-white p-6 rounded-xl shadow-md w-80 flex flex-col gap-3"
+        className="bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-blue-100/50 w-full max-w-sm flex flex-col gap-4 border border-white"
       >
-        <h1 className="text-xl font-bold text-center">Cadastro</h1>
-        <input
-          type="text"
-          placeholder="Nome"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="text"
-          placeholder="CPF"
-          value={cpf}
-          onChange={(e) => setCpf(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="password"
-          placeholder="Senha"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-          className="border p-2 rounded"
-        />
+        <div className="text-center mb-2">
+          <h2 className="text-xl font-bold text-slate-800">Crie sua conta</h2>
+          <p className="text-sm text-slate-400">Simples, rápido e 100% digital</p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-400 uppercase ml-1">Nome Completo</label>
+            <input
+              type="text"
+              placeholder="Seu nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              className="w-full border-2 border-slate-50 bg-slate-50 p-4 rounded-2xl focus:border-[#003399] focus:bg-white outline-none transition-all text-slate-700"
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-400 uppercase ml-1">CPF</label>
+            <input
+              type="text"
+              placeholder="000.000.000-00"
+              value={cpf}
+              onChange={(e) => setCpf(e.target.value)}
+              className="w-full border-2 border-slate-50 bg-slate-50 p-4 rounded-2xl focus:border-[#003399] focus:bg-white outline-none transition-all text-slate-700"
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-400 uppercase ml-1">Senha</label>
+            <input
+              type="password"
+              placeholder="Crie uma senha forte"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="w-full border-2 border-slate-50 bg-slate-50 p-4 rounded-2xl focus:border-[#003399] focus:bg-white outline-none transition-all text-slate-700"
+              required
+            />
+          </div>
+        </div>
+
         <button
           type="submit"
-          className="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
+          disabled={loading}
+          className="bg-[#003399] hover:bg-blue-800 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-100 transition-all active:scale-[0.98] disabled:opacity-50 mt-4 cursor-pointer"
         >
-          Cadastrar
+          {loading ? "Cadastrando..." : "Confirmar Cadastro"}
         </button>
-        <p className="text-sm text-center">
-          Já tem conta?{" "}
+
+        <p className="text-sm text-center text-slate-500 mt-2">
+          Já faz parte do Ford Enter?{" "}
           <span
-            className="text-blue-500 cursor-pointer"
+            className="text-[#003399] font-bold cursor-pointer hover:underline"
             onClick={() => navigate("/")}
           >
-            Entrar
+            Fazer Login
           </span>
         </p>
       </form>
